@@ -2,7 +2,10 @@ use napi::JsFunction;
 use napi_derive::napi;
 use std::collections::HashMap;
 
+mod database;
 mod windows;
+
+pub use database::*;
 
 /**
  * 获取图标
