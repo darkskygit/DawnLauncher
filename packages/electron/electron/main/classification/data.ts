@@ -8,7 +8,7 @@ import {
   newClassificationData,
 } from "../../../commons/utils/common";
 import { deleteByClassificationId, updateClassificationId } from "../item/data";
-import { getDataSqlite3 } from "../../commons/betterSqlite3";
+import { getDataSource, getDataSqlite3 } from "../../commons/betterSqlite3";
 
 // 获取数据库
 let db = getDataSqlite3();
@@ -67,21 +67,11 @@ function init() {
  * @param parentId
  */
 function list(parentId: number | null = null) {
-  // 参数
-  let params = [];
-  // sql
-  let sql = `SELECT ${selectColumn} FROM ${classificationTableName}`;
-  if (parentId) {
-    sql += " WHERE parent_id = ?";
-    params.push(parentId);
-  }
-  sql += " ORDER BY `order` ASC";
-  // 查询
-  let list = db.prepare(sql).all(params);
-  // 返回
-  return list.map((row) => {
-    return getClassification(row);
-  });
+	const list = getDataSource().getClassification(parentId ? parentId : null)
+
+	return list.map((row) => {
+		return getClassification(row)
+	})
 }
 
 /**

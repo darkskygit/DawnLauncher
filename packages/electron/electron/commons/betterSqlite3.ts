@@ -1,4 +1,5 @@
 import { join, dirname } from 'node:path'
+import { DataSource } from '@dawn-launcher/addon'
 import Database from 'better-sqlite3-multiple-ciphers'
 import { getUserDataPath } from '../main/commons'
 
@@ -26,6 +27,12 @@ function getCustomDataSqlite3(filePath: string) {
 		nativeBinding: join(process.env.NODE_ENV !== 'development' ? dirname(process.execPath) : '', import.meta.env.VITE_BETTER_SQLITE3_BINDING),
 	})
 	return db
+}
+
+const dataSource = new DataSource(join(getUserDataPath(), 'Data.db'))
+
+export function getDataSource() {
+	return dataSource
 }
 
 export { getDataSqlite3, getCacheDataSqlite3, getCustomDataSqlite3 }

@@ -21,6 +21,7 @@ const {
 	emptyRecycleBin,
 	removeWindowAnimation,
 	getAppxList,
+	DataSource,
 } = Addon
 
 export default Addon
@@ -46,4 +47,5 @@ export {
 	emptyRecycleBin,
 	removeWindowAnimation,
 	getAppxList,
+	DataSource,
 }
