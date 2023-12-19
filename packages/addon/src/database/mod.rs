@@ -153,6 +153,7 @@ impl DataSource {
     Ok(rows.pop())
   }
 
+  /// 查询最大序号
   #[napi]
   pub fn get_classification_max_order(&self, parent_id: Option<i64>) -> Result<i64> {
     self
@@ -183,5 +184,51 @@ impl DataSource {
           format!("Failed to prepare statement: {}", e),
         )
       })
+  }
+
+  #[napi]
+  pub fn update_classification_data(&self, id: i64, data: String) -> Result<i64> {
+    self
+      .conn
+      .prepare("UPDATE classification SET data = ? WHERE id = ?")
+      .and_then(|mut stmt| stmt.execute([data, id.to_string()]))
+      .map_err(|e| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Failed to prepare statement: {}", e),
+        )
+      })
+      .map(|affect: usize| affect as i64)
+  }
+
+  #[napi]
+  pub fn has_child_classification(&self, parent_id: Option<i64>) -> Result<bool> {
+    self.get_classification(parent_id).map(|v| !v.is_empty())
+  }
+
+  /// 重新排序
+  #[napi]
+  pub fn reorder_classification(&self, parent_id: Option<i64>) -> Result<()> {
+    let mut stmt = self
+      .conn
+      .prepare("UPDATE classification SET `order` = ? WHERE id = ?")
+      .map_err(|e| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Failed to prepare statement: {}", e),
+        )
+      })?;
+
+    for (i, classification) in self.get_classification(parent_id)?.iter().enumerate() {
+      stmt
+        .execute([(i as i32 + 1), classification.id])
+        .map_err(|e| {
+          Error::new(
+            Status::GenericFailure,
+            format!("Failed to execute statement: {}", e),
+          )
+        })?;
+    }
+    Ok(())
   }
 }

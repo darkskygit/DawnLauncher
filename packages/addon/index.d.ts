@@ -129,5 +129,10 @@ export class DataSource {
   getClassificationCount(): number
   getClassification(parentId?: number | undefined | null): Array<Classification>
   getClassificationById(id: number): Classification | null
+  /** 查询最大序号 */
   getClassificationMaxOrder(parentId?: number | undefined | null): number
+  updateClassificationData(id: number, data: string): number
+  hasChildClassification(parentId?: number | undefined | null): boolean
+  /** 重新排序 */
+  reorderClassification(parentId?: number | undefined | null): void
 }

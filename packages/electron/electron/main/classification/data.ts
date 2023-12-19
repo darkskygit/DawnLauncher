@@ -4,6 +4,8 @@ import { newClassification, newClassificationData } from '../../../commons/utils
 import { deleteByClassificationId, updateClassificationId } from '../item/data'
 import { getDataSource, getDataSqlite3 } from '../../commons/betterSqlite3'
 
+const dataSource = getDataSource()
+
 // 获取数据库
 let db = getDataSqlite3()
 
@@ -29,9 +31,7 @@ function getClassification(row: any): Classification {
 /**
  * 初始化
  */
-function init() {
-	const dataSource = getDataSource()
-
+export function init() {
 	if (dataSource.getClassificationCount() === 0) {
 		// 新增分类
 		add(null, global.language.newClassificationName, null, false)
@@ -40,10 +40,9 @@ function init() {
 
 /**
  * 列表
- * @param parentId
  */
-function list(parentId: number | null = null) {
-	const list = getDataSource().getClassification(parentId ? parentId : null)
+export function list(parentId: number | null = null) {
+	const list = dataSource.getClassification(parentId ? parentId : null)
 
 	return list.map((row) => {
 		return getClassification(row)
@@ -52,13 +51,8 @@ function list(parentId: number | null = null) {
 
 /**
  * 添加
- * @param parentId
- * @param name
- * @param shortcutKey
- * @param globalShortcutKey
- * @returns
  */
-function add(
+export function add(
 	parentId: number | null,
 	name: string,
 	shortcutKey: string | null,
@@ -67,7 +61,7 @@ function add(
 	type: number = 0
 ): Classification | null {
 	// 获取序号
-	let newOrder = getMaxOrder(parentId) + 1
+	let newOrder = dataSource.getClassificationMaxOrder(parentId) + 1
 	// SQL
 	let sql = `INSERT INTO ${classificationTableName} (parent_id, name, type, data, shortcut_key, global_shortcut_key, \`order\`) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	// 运行
@@ -94,13 +88,8 @@ function add(
 
 /**
  * 更新
- * @param id
- * @param name
- * @param shortcutKey
- * @param globalShortcutKey
- * @returns
  */
-function update(classification: Classification) {
+export function update(classification: Classification) {
 	// SQL
 	let sql = `UPDATE ${classificationTableName} SET name = ?, type = ?, data = ?, shortcut_key = ?, global_shortcut_key = ? WHERE id = ?`
 	// 运行
@@ -120,28 +109,22 @@ function update(classification: Classification) {
 
 /**
  * 更新数据
- * @param id
- * @param data
  */
-function updateData(id: number, data: ClassificationData) {
-	// SQL
-	let sql = `UPDATE ${classificationTableName} SET data = ? WHERE id = ?`
-	return db.prepare(sql).run(JSON.stringify(data), id).changes > 0
+export function updateData(id: number, data: ClassificationData) {
+	return dataSource.updateClassificationData(id, JSON.stringify(data)) > 0
 }
 
 /**
  * 根据ID查询
- * @param id
  */
-function selectById(id: number): Classification | null {
-	return getClassification(getDataSource().getClassificationById(id))
+export function selectById(id: number): Classification | null {
+	return getClassification(dataSource.getClassificationById(id))
 }
 
 /**
  * 删除
- * @param id
  */
-function del(id: number) {
+export function del(id: number) {
 	// 查询数据
 	let classifictaion = selectById(id)
 	if (classifictaion) {
@@ -153,7 +136,7 @@ function del(id: number) {
 		let res = db.prepare(sql).run(id, id).changes > 0
 		if (res) {
 			// 更新序号
-			reorder(classifictaion.parentId)
+			dataSource.reorderClassification(classifictaion.parentId)
 			// 删除分类下所有项目
 			deleteByClassificationId(id)
 			// 删除子分类下所有项目
@@ -179,11 +162,8 @@ function del(id: number) {
 
 /**
  * 排序
- * @param fromId
- * @param toId
- * @param parentId
  */
-function updateOrder(fromId: number, toId: number | null, parentId: number | null) {
+export function updateOrder(fromId: number, toId: number | null, parentId: number | null) {
 	// 查询来源分类
 	let fromClassification = selectById(fromId)
 	if (fromClassification) {
@@ -196,7 +176,7 @@ function updateOrder(fromId: number, toId: number | null, parentId: number | nul
 				newOrder = toClassification.order
 			}
 		} else {
-			newOrder = getMaxOrder(parentId) + 1
+			newOrder = dataSource.getClassificationMaxOrder(parentId) + 1
 		}
 		// SQL
 		let sql = `UPDATE ${classificationTableName} SET \`order\` = ? WHERE id = ?`
@@ -232,82 +212,38 @@ function updateOrder(fromId: number, toId: number | null, parentId: number | nul
 }
 
 /**
- * 重新排序
- * @param parentId
- */
-function reorder(parentId: number | null) {
-	// 查询分类列表
-	let classificationList = list(parentId)
-	// 开启事务
-	db.transaction(() => {
-		// SQL
-		let sql = `UPDATE ${classificationTableName} SET \`order\` = ? WHERE id = ?`
-		// 更新序号
-		for (let i = 0; i < classificationList.length; i++) {
-			db.prepare(sql).run(i + 1, classificationList[i].id)
-		}
-	})()
-}
-
-/**
- * 查询最大序号
- * @param parentId
- */
-function getMaxOrder(parentId: number | null) {
-	return getDataSource().getClassificationMaxOrder(parentId)
-}
-
-/**
  * 更新图标
- * @param id
- * @param icon
  */
-function updateIcon(id: number, icon: string | null) {
+export function updateIcon(id: number, icon: string | null) {
 	// 查询分类
 	let classification = selectById(id)
 	if (classification) {
-		// SQL
-		let sql = `UPDATE ${classificationTableName} SET data = ? WHERE id = ?`
 		// 更新图标
-		classification.data.icon = icon
-		return db.prepare(sql).run(JSON.stringify(classification.data), id).changes > 0
+		return updateData(id, { ...classification.data, icon })
 	}
 	return false
 }
 
 /**
  * 是否有子分类
- * @param id
  */
-function hasChildClassification(id: number) {
-	let classificationList = list(id)
-	return classificationList.length > 0
-}
-
-/**
- * 更新固定分类
- * @param classification
- * @param fixed
- */
-function updateFixed(classification: Classification, fixed: boolean) {
-	classification.data.fixed = fixed
-	updateData(classification.id, classification.data)
+export function hasChildClassification(id: number) {
+	return dataSource.hasChildClassification(id)
 }
 
 /**
  * 批量更新固定分类
- * @param id
  */
-function batchUpdateFixed(id: number | null = null) {
-	// 事务
-	db.transaction(() => {
-		// 查询所有分类
-		let classificationList = list()
-		// 更新
-		for (const classification of classificationList) {
-			updateFixed(classification, id === classification.id)
-		}
-	})()
+export function batchUpdateFixed(id: number | null = null) {
+	// 查询所有分类
+	let classificationList = list()
+	// 更新
+	for (const classification of classificationList) {
+		updateData(classification.id, {
+			...classification.data,
+			fixed: id === classification.id,
+		})
+	}
 }
 
-export { init, list, add, del, selectById, update, updateData, updateOrder, updateIcon, hasChildClassification, batchUpdateFixed }
+export { dataSource }
