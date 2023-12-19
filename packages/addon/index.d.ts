@@ -126,5 +126,8 @@ export class Classification {
 }
 export class DataSource {
   constructor(path: string)
+  getClassificationCount(): number
   getClassification(parentId?: number | undefined | null): Array<Classification>
+  getClassificationById(id: number): Classification | null
+  getClassificationMaxOrder(parentId?: number | undefined | null): number
 }

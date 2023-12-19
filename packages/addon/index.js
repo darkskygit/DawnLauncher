@@ -1,6 +1,12 @@
 import * as Addon from './addon.node'
 
 const {
+	ItemLayout,
+	ItemSort,
+	ItemShowOnly,
+	ClassificationData,
+	Classification,
+	DataSource,
 	getFileIcon,
 	searchPath,
 	getShortcutFileInfo,
@@ -21,12 +27,17 @@ const {
 	emptyRecycleBin,
 	removeWindowAnimation,
 	getAppxList,
-	DataSource,
 } = Addon
 
 export default Addon
 
 export {
+	ItemLayout,
+	ItemSort,
+	ItemShowOnly,
+	ClassificationData,
+	Classification,
+	DataSource,
 	getFileIcon,
 	searchPath,
 	getShortcutFileInfo,
@@ -47,5 +58,4 @@ export {
 	emptyRecycleBin,
 	removeWindowAnimation,
 	getAppxList,
-	DataSource,
 }
