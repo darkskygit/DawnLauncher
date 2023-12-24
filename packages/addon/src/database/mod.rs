@@ -2,7 +2,7 @@ mod classification;
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use rusqlite::{Connection, Result as RusqliteResult};
+use rusqlite::{params, Connection, Result as RusqliteResult};
 use serde::{Deserialize, Serialize};
 
 pub use classification::*;
@@ -46,6 +46,84 @@ impl DataSource {
       })?;
 
     Ok(Self { conn })
+  }
+
+  #[napi]
+  pub fn insert_classification(
+    &self,
+    parent_id: Option<i64>,
+    name: String,
+    shortcut_key: Option<String>,
+    global_shortcut_key: bool,
+    data: String,
+    type_: Option<i64>,
+  ) -> Result<Option<Classification>> {
+    let new_order = self.get_classification_max_order(parent_id)? + 1;
+    let insert = "INSERT INTO classification (parent_id, name, type, data, shortcut_key, global_shortcut_key, `order`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    match self.conn.prepare(insert).and_then(|mut stmt| {
+      stmt.insert(params![
+        parent_id,
+        Some(name),
+        type_,
+        data,
+        shortcut_key,
+        global_shortcut_key,
+        new_order,
+      ])
+    }) {
+      Ok(id) => {
+        if let Some(parent_id) = parent_id {
+          self
+            .conn
+            .prepare("UPDATE item SET classification_id = ? WHERE classification_id = ?")
+            .and_then(|mut stmt| stmt.execute([id, parent_id]))
+            .map_err(|e| {
+              Error::new(
+                Status::GenericFailure,
+                format!("Failed to execute statement: {}", e),
+              )
+            })?;
+        }
+        self.get_classification_by_id(id)
+      }
+      Err(e) => Err(Error::new(
+        Status::GenericFailure,
+        format!("Failed to execute statement: {}", e),
+      )),
+    }
+  }
+
+  #[napi]
+  pub fn update_classification(
+    &self,
+    id: i64,
+    name: String,
+    shortcut_key: Option<String>,
+    global_shortcut_key: bool,
+    data: String,
+    type_: Option<i64>,
+  ) -> Result<bool> {
+    let update = "UPDATE classification SET name = ?, type = ?, data = ?, shortcut_key = ?, global_shortcut_key = ? WHERE id = ?";
+    self
+      .conn
+      .prepare(update)
+      .and_then(|mut stmt| {
+        stmt.execute(params![
+          name,
+          type_,
+          data,
+          shortcut_key,
+          global_shortcut_key,
+          id
+        ])
+      })
+      .map(|affect| affect > 0)
+      .map_err(|e| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Failed to execute statement: {}", e),
+        )
+      })
   }
 
   #[napi]

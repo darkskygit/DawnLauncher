@@ -1,7 +1,7 @@
 import { deleteAssociateFolderWatcher } from '.'
 import { Classification, ClassificationData } from '../../../types/classification'
 import { newClassification, newClassificationData } from '../../../commons/utils/common'
-import { deleteByClassificationId, updateClassificationId } from '../item/data'
+import { deleteByClassificationId } from '../item/data'
 import { getDataSource, getDataSqlite3 } from '../../commons/betterSqlite3'
 
 const dataSource = getDataSource()
@@ -23,7 +23,7 @@ function getClassification(row: any): Classification {
 		type: row.type,
 		data: newClassificationData(JSON.parse(row.data)),
 		shortcutKey: row.shortcutKey,
-		globalShortcutKey: row.globalShortcutKey === 1,
+		globalShortcutKey: [1, true].includes(row.globalShortcutKey),
 		order: row.order,
 	})
 }
@@ -60,50 +60,21 @@ export function add(
 	data: ClassificationData = newClassificationData({}),
 	type: number = 0
 ): Classification | null {
-	// 获取序号
-	let newOrder = dataSource.getClassificationMaxOrder(parentId) + 1
-	// SQL
-	let sql = `INSERT INTO ${classificationTableName} (parent_id, name, type, data, shortcut_key, global_shortcut_key, \`order\`) VALUES (?, ?, ?, ?, ?, ?, ?)`
-	// 运行
-	let id = db.prepare(sql).run(parentId, name, type, JSON.stringify(data), shortcutKey, globalShortcutKey ? 1 : 0, newOrder).lastInsertRowid as number
-	if (id) {
-		let classification = newClassification({
-			id,
-			name,
-			parentId,
-			type,
-			data,
-			shortcutKey,
-			globalShortcutKey,
-			order: newOrder,
-		})
-		// 如果是添加子分类，将父级分类下的项目移动到新建的子分类中
-		if (parentId) {
-			updateClassificationId(parentId, id)
-		}
-		return classification
-	}
-	return null
+	return getClassification(dataSource.insertClassification(parentId, name, shortcutKey, globalShortcutKey, JSON.stringify(data), type))
 }
 
 /**
  * 更新
  */
 export function update(classification: Classification) {
-	// SQL
-	let sql = `UPDATE ${classificationTableName} SET name = ?, type = ?, data = ?, shortcut_key = ?, global_shortcut_key = ? WHERE id = ?`
-	// 运行
-	return (
-		db
-			.prepare(sql)
-			.run(
-				classification.name,
-				classification.type,
-				JSON.stringify(classification.data),
-				classification.shortcutKey,
-				classification.globalShortcutKey ? 1 : 0,
-				classification.id
-			).changes > 0
+	console.log(classification.globalShortcutKey)
+	return dataSource.updateClassification(
+		classification.id,
+		classification.name,
+		classification.shortcutKey,
+		classification.globalShortcutKey,
+		JSON.stringify(classification.data),
+		classification.type
 	)
 }
 

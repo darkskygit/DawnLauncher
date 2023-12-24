@@ -126,6 +126,8 @@ export class Classification {
 }
 export class DataSource {
   constructor(path: string)
+  insertClassification(parentId: number | undefined | null, name: string, shortcutKey: string | undefined | null, globalShortcutKey: boolean, data: string, type?: number | undefined | null): Classification | null
+  updateClassification(id: number, name: string, shortcutKey: string | undefined | null, globalShortcutKey: boolean, data: string, type?: number | undefined | null): boolean
   getClassificationCount(): number
   getClassification(parentId?: number | undefined | null): Array<Classification>
   getClassificationById(id: number): Classification | null
