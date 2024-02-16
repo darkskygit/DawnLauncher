@@ -15,8 +15,7 @@ use std::{
 };
 use windows::Management::Deployment::PackageManager;
 use windows::{
-  core::{ComInterface, HSTRING, PCSTR, PCWSTR},
-  w,
+  core::{w, ComInterface, HSTRING, PCSTR, PCWSTR},
   Win32::{
     Foundation::{HWND, LPARAM, LRESULT, MAX_PATH, POINT, RECT, SIZE, WPARAM},
     Graphics::{

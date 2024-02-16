@@ -12,13 +12,13 @@ napi = { version = "2", features = ["napi4"] }
 napi-derive = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-image = "0.24.7"
-base64 = "0.21.2"
-clipboard-win = "4.5.0"
+image = "0.24.8"
+base64 = "0.21.7"
+clipboard-win = "5.1.0"
 rusqlite = { version = "0.30.0", features = ["bundled"] }
 
 [dependencies.windows]
-version = "0.48.0"
+version = "0.52.0"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
@@ -40,6 +40,3 @@ features = [
 [build-dependencies]
 napi-build = "2"
 static_vcruntime = "2.0"
-
-[profile.release]
-lto = true
