@@ -124,10 +124,15 @@ export class Classification {
   constructor()
   getChildList(parentId: number, dataSource: DataSource): Array<Classification>
 }
+export class DeleteClassificationResult {
+  success: boolean
+  deletedFolder: Array<number>
+}
 export class DataSource {
   constructor(path: string)
   insertClassification(parentId: number | undefined | null, name: string, shortcutKey: string | undefined | null, globalShortcutKey: boolean, data: string, type?: number | undefined | null): Classification | null
   updateClassification(id: number, name: string, shortcutKey: string | undefined | null, globalShortcutKey: boolean, data: string, type?: number | undefined | null): boolean
+  deleteClassification(id: number): DeleteClassificationResult
   getClassificationCount(): number
   getClassification(parentId?: number | undefined | null): Array<Classification>
   getClassificationById(id: number): Classification | null

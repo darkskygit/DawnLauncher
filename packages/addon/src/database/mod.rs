@@ -126,6 +126,53 @@ impl DataSource {
       })
   }
 
+  fn delete_classification_by_id(&self, id: i64) -> Result<bool> {
+    self
+      .conn
+      .prepare("DELETE FROM classification WHERE id = ?")
+      .map_err(|e| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Failed to prepare statement: {}", e),
+        )
+      })?
+      .execute([id])
+      .map(|affect| affect > 0)
+      .map_err(|e| {
+        Error::new(
+          Status::GenericFailure,
+          format!("Failed to execute statement: {}", e),
+        )
+      })
+  }
+
+  #[napi]
+  pub fn delete_classification(&self, id: i64) -> Result<DeleteClassificationResult> {
+    if let Some(classification) = self.get_classification_by_id(id)? {
+      let mut folder_ids = vec![];
+
+      let child = self.get_classification(Some(classification.id))?;
+
+      // delete child
+      for child in child {
+        self.delete_classification(child.id)?;
+        if child.type_ == 1 {
+          folder_ids.push(child.id);
+        }
+      }
+
+      self.delete_classification_by_id(id)?;
+      if let Some(parent_id) = classification.parent_id {
+        self.reorder_classification(Some(parent_id))?;
+      }
+      if classification.type_ == 1 {
+        folder_ids.push(classification.id);
+      }
+      return Ok(DeleteClassificationResult::success(folder_ids));
+    }
+    Ok(DeleteClassificationResult::fail())
+  }
+
   #[napi]
   pub fn get_classification_count(&self) -> Result<i64> {
     self
@@ -299,7 +346,7 @@ impl DataSource {
 
     for (i, classification) in self.get_classification(parent_id)?.iter().enumerate() {
       stmt
-        .execute([(i as i32 + 1), classification.id])
+        .execute([(i as i64 + 1), classification.id])
         .map_err(|e| {
           Error::new(
             Status::GenericFailure,

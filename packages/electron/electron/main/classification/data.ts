@@ -96,39 +96,12 @@ export function selectById(id: number): Classification | null {
  * 删除
  */
 export function del(id: number) {
-	// 查询数据
-	let classifictaion = selectById(id)
-	if (classifictaion) {
-		// 查询有无子分类
-		let childList = list(classifictaion.id)
-		// SQL
-		let sql = `DELETE FROM ${classificationTableName} WHERE id = ? or parent_id = ?`
-		// 运行
-		let res = db.prepare(sql).run(id, id).changes > 0
-		if (res) {
-			// 更新序号
-			dataSource.reorderClassification(classifictaion.parentId)
-			// 删除分类下所有项目
-			deleteByClassificationId(id)
-			// 删除子分类下所有项目
-			for (const child of childList) {
-				deleteByClassificationId(child.id)
-				if (child.type === 1) {
-					// 删除关联文件夹
-					deleteAssociateFolderWatcher(child.id)
-				}
-			}
-			if (classifictaion.type === 1) {
-				// 删除关联文件夹
-				deleteAssociateFolderWatcher(classifictaion.id)
-			}
-			return true
-		} else {
-			return false
-		}
-	} else {
-		return false
+	const { success, deletedFolder } = dataSource.deleteClassification(id)
+	for (const folder of deletedFolder) {
+		// 删除关联文件夹
+		deleteAssociateFolderWatcher(folder)
 	}
+	return success
 }
 
 /**

@@ -48,8 +48,8 @@ pub struct ClassificationData {
 #[napi]
 #[derive(Debug, Deserialize)]
 pub struct Classification {
-  pub id: i32,
-  pub parent_id: Option<i32>,
+  pub id: i64,
+  pub parent_id: Option<i64>,
   pub name: Option<String>,
   #[serde(rename = "type")]
   pub type_: i32,
@@ -110,6 +110,29 @@ impl Default for Classification {
       shortcut_key: None,
       global_shortcut_key: false,
       order: 0,
+    }
+  }
+}
+
+#[napi]
+#[derive(Debug, Deserialize)]
+pub struct DeleteClassificationResult {
+  pub success: bool,
+  pub deleted_folder: Vec<i64>,
+}
+
+impl DeleteClassificationResult {
+  pub fn success(deleted_folder: Vec<i64>) -> Self {
+    DeleteClassificationResult {
+      success: true,
+      deleted_folder,
+    }
+  }
+
+  pub fn fail() -> Self {
+    DeleteClassificationResult {
+      success: false,
+      deleted_folder: vec![],
     }
   }
 }
