@@ -1,7 +1,6 @@
 import { deleteAssociateFolderWatcher } from '.'
 import { Classification, ClassificationData } from '../../../types/classification'
 import { newClassification, newClassificationData } from '../../../commons/utils/common'
-import { deleteByClassificationId } from '../item/data'
 import { getDataSource, getDataSqlite3 } from '../../commons/betterSqlite3'
 
 const dataSource = getDataSource()
