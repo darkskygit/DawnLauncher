@@ -1089,6 +1089,25 @@
               size="small"
               class="mt-3"
             >
+              <span class="block font-semibold">{{ store.language.size }}</span>
+              <NFormItem :label="store.language.width" class="mt-1">
+                <NInputNumber
+                  v-model:value="setting.quickSearch.width"
+                  size="small"
+                  :min="0"
+                  class="w-full"
+                  placeholder=""
+                  :show-button="false"
+                  @update:value="updateQuickSearchWidth"
+                ></NInputNumber>
+              </NFormItem>
+            </NForm>
+            <NForm
+              label-placement="left"
+              :show-feedback="false"
+              size="small"
+              class="mt-3"
+            >
               <span class="block font-semibold">{{
                 store.language.window
               }}</span>
@@ -1220,7 +1239,7 @@
                     :style="{
                       backgroundColor: hexToRGBA(
                         setting.appearance.theme.secondBackgroundColor,
-                        0.8
+                        0.7
                       ),
                       color: setting.appearance.theme.secondFontColor,
                     }"
@@ -1263,7 +1282,7 @@
                           searchSourceId === item.id
                             ? hexToRGBA(
                                 setting.appearance.theme.secondBackgroundColor,
-                                0.8
+                                0.7
                               )
                             : undefined,
                         color:
@@ -1280,7 +1299,7 @@
                               'background-color',
                               hexToRGBA(
                                 setting.appearance.theme.secondBackgroundColor,
-                                0.8
+                                0.7
                               ),
                             ],
                             ['color', setting.appearance.theme.secondFontColor],
@@ -2121,6 +2140,12 @@ let quickSearchHistorySortOptions = ref([
     value: "openNumber",
   },
 ]);
+// 快速搜索宽度更新
+function updateQuickSearchWidth(value: number | null) {
+  if (value) {
+    window.quickSearch.setWindowWidth(value);
+  }
+}
 // 网络搜索模式
 let webSearchModeOptions = ref([
   {
@@ -2144,7 +2169,7 @@ let searchSourceName = ref<string | null>(null);
 let searchSourceURL = ref<string | null>(null);
 // 网络搜索源描述
 let searchSourceDescription = ref<string | null>(null);
-//  显示新增搜索源
+// 显示新增搜索源
 function showAddSearchSource() {
   searchSourceType.value = "add";
   searchSourceId.value = null;

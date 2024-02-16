@@ -27,6 +27,7 @@ if (
 ) {
   app.setPath("appData", join(dirname(process.execPath), "data"));
   app.setPath("userData", join(dirname(process.execPath), "data"));
+  app.setPath("sessionData", join(dirname(process.execPath), "data"));
 }
 
 process.env.DIST_ELECTRON = join(__dirname, "..");
@@ -55,6 +56,12 @@ if (!app.requestSingleInstanceLock()) {
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 app.whenReady().then(() => {
   try {
+    // 禁止多开
+    const instanceLock = app.requestSingleInstanceLock();
+    if (!instanceLock) {
+      app.quit();
+      return;
+    }
     // addon
     global.addon = Addon;
     // 初始化数据
@@ -77,12 +84,6 @@ app.whenReady().then(() => {
         app.quit();
         return;
       }
-    }
-    // 禁止多开
-    const instanceLock = app.requestSingleInstanceLock();
-    if (!instanceLock) {
-      app.quit();
-      return;
     }
     // 初始化数据
     classificationDataInit();
